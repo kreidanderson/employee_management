@@ -30,43 +30,144 @@ function init() {
             viewAll();
             break;
         case "View All Employees By Department":
-            //appr. function
+            viewAllByDep();
             break;
         case "View All Employees By Manager":
-            //appr. function
+            viewAllByManager();
             break;
         case "Add Employee":
-            //appr. function
+           addEmployee();
             break;
         case "Remove Employee":
-            //appr. function
+            //appr. Remove Employee function
             break;
         case "Update Employee Role":
-            //appr. function
+            //appr. Update Employee Role function
             break;
         case "Update Employee Manager":
-            //appr. function
+            //appr. Update Employee Manager function
             break;
         default: "- Exit Program -";
             return quit()
- 
+        
         };
     });
 };
 
 
+var currentEmp = `SELECT
+first_name,
+last_name
+FROM employee
+ORDER BY last_name`
+
 function viewAll() {
-    console.log("You are viewing all employees...\n");
-    connection.query("SELECT * FROM employee", function(err, res) {
+    console.log("You are viewing all employees\n");
+    connection.query(currentEmp, function(err, res) {
       if (err) throw err;
       // Log all results of the SELECT statement
       console.table(res);
-      connection.end();
+    init();
     });
 }
 
-
-function quit(){
-// stop the program
-
+function viewAllByDep(){
+    console.log("You are viewing all employees by department\n");
+    connection.query(`SELECT 
+    department.name,
+    employee.first_name,
+    employee.last_name,
+    role.title
+FROM employee
+INNER JOIN role ON employee.role_id = role.id
+INNER JOIN department ON role.department_id = department.id
+ORDER BY department.id`, function(err, res) {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res);
+    //   connection.end();
+    init();
+    });
 }
+
+function viewAllByManager(){
+    console.log("You are viewing all employees by department\n");
+    connection.query(`SELECT 
+    employee.manager_id,
+    employee.first_name,
+    employee.last_name,
+    role.title
+FROM employee
+INNER JOIN role ON employee.role_id = role.id
+ORDER BY employee.manager_id`, function(err, res) {
+      if (err) throw err;
+      // Log all results of the SELECT statement
+      console.table(res);
+    //   connection.end();
+    init();
+    });
+}
+
+function addEmployee(){
+console.log("Please update their information")
+    var addEmp = [
+{type: "input",
+message: "What is their first name?",
+name: "first",
+},
+{type: "input",
+message: "What is their last name?",
+name: "last",
+},
+{type: 'list',
+message: "What is the employee's role?",
+name: 'role',
+choices: ["Junior Engineer", "Chief Engineer", "Junior Accountant", "Senior Accountant", "Sales Coordinator", "Sales Executive", "Front Desk", "Marketing"]
+},
+// {type: 'list',
+// message: `Who is the employee's manager?`,
+// name: 'manager',
+// choices: [ list out all possible managers]
+// }
+]
+
+inquirer
+.prompt(addEmp)
+    .then(function (res) {
+
+console.log(res)
+connection.query("INSERT INTO employee SET ?",{
+    first_name: res.first,
+    last_name: res.last,
+    role: res.role,
+    // I don't think this is going to work - NEED TO FIX
+  });
+
+
+});
+
+};
+
+
+function quit() {
+    console.log("you exited from the system.")
+    
+    };
+
+
+// function deleteEmp(){
+//         console.log("Which employee would you like to delete?")
+//         connection.query("DELETE FROM employee WHERE id = ?", function(err, result) {
+//           if (err) {
+//             // If an error occurred, send a generic server failure
+//             return res.status(500).end();
+//           }
+//           else if (result.affectedRows === 0) {
+//             // If no rows were changed, then the ID must not exist, so 404
+//             return res.status(404).end();
+//           }
+//           res.status(200).end();
+      
+//         });
+//       });
+// }
