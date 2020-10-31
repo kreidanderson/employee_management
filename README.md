@@ -1,6 +1,6 @@
 # Employee Management System
 
-![System Example](employeeMngmt.png)
+![System Example](empManagement.png)
 
 ## Goals
 - The goal of this project was to create an employee management system. Ultimately through mysql you would be able to update employee information, roles, and departments all by following the steps given to you.
