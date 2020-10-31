@@ -42,13 +42,13 @@ function init() {
             removeEmp();
             break;
         case "Update Employee Role":
-            //appr. Update Employee Role function
+            updateEmp();
             break;
         case "Update Employee Manager":
-            updateManager()
+            updateManager();
             break;
         default: "- Exit Program -";
-            return quit()
+            return quit();
         
         };
     });
@@ -91,7 +91,7 @@ ORDER BY department.id`, function(err, res) {
 }
 
 function viewAllByManager(){
-    console.log("You are viewing all employees by department\n");
+    console.log("You are viewing all employees by manager\n");
     connection.query(`SELECT 
     employee.manager_id,
     employee.first_name,
@@ -103,36 +103,29 @@ ORDER BY employee.manager_id`, function(err, res) {
       if (err) throw err;
       // Log all results of the SELECT statement
       console.table(res);
+      console.table
     //   connection.end();
     init();
     });
 }
 
-function findRolesAsArray(){
-    return connection.query(`SELECT title from role`, function(err,res){
-        if (err) throw err;
-
-        var roleArray = res.map(record => record.title)
-        // console.log("Find all roles: ", roleArray)
-        
-        return roleArray
-        
-        // here i want to be able to put roleArray inside add employee
-    });
-
-}
 
 function addEmployee(first_name, last_name, role_id, manager_id) {
-    connection.query(`SELECT title from role`, function(err,res){
+    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, role.id, role.title FROM employee INNER JOIN role ON employee.role_id = role.id ORDER BY last_name`, function(err,res){
         if (err) throw err;
 
-        var roleArray = res.map(record => record.title)
-        // console.log("Find all roles: ", roleArray)
-        
+       
+        var roleArray = res.map(record => {
+           return { name: record.title, value: record.role_id }
+        })
+        var employeeArray = res.map(record2 =>  {
+            return { name: record2.first_name + " " + record2.last_name, value: record2.id }
+        }) // [{}, {}, {}, {}]
+    
     
     // findRolesAsArray().then((roleList) => {
        
-        console.log("Please update their information");
+        console.log("Please add their information:");
         var addEmp = [
             {
                 type: "input",
@@ -154,7 +147,7 @@ function addEmployee(first_name, last_name, role_id, manager_id) {
                 type: 'list',
                 message: `Who is the employee's manager?`,
                 name: 'manager',
-                choices: ["list out all possible managers"]
+                choices: employeeArray
             }
         ]
     
@@ -163,22 +156,16 @@ function addEmployee(first_name, last_name, role_id, manager_id) {
             .then(function (res) {
 
                 console.log(res)
+            
 
-
-                connection.query(`INSERT INTO employee (first_name, last_name) VALUES ('${res.first}', '${res.last}')`, function (err, res) {
+                connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ('${res.first}', '${res.last}', '${res.role}', '${res.manager}')`
+                
+                , function (err, res) {
                     if (err) console.log(err);
-                    console.log(res);
+                    
                 })
 
-                // connection.query("INSERT INTO employee SET ?",{
-                //     first_name: res.first,
-                //     last_name: res.last,
-                //     role: res.role,
-                //     // employee.role_id = role.title
-                //     manager: res.manager
-                //     // employee.manager_id = employee.first_name * employee.last_name
-                //   });
-
+                init()
             });
     });
 
@@ -187,37 +174,47 @@ function addEmployee(first_name, last_name, role_id, manager_id) {
 
 
 function updateEmp(first_name, last_name, role_id, manager_id){
-    console.log("Which employee would you like to update?")
-    // this is where we put the names in inquirer
-    console.log("LINE 132",roleList);
+    connection.query(`SELECT employee.id, employee.first_name, employee.last_name, employee.role_id, employee.manager_id, role.id, role.title FROM employee INNER JOIN role ON employee.role_id = role.id ORDER BY last_name`, function(err,res){
+        if (err) throw err;
+
+        console.table(res)
+        var roleArray = res.map(record => {
+           return { name: record.title, value: record.role_id }
+        })
+        var employeeArray = res.map(record2 =>  {
+            return { name: record2.first_name + " " + record2.last_name, value: record2.id }
+        })
+
         console.log("Please update their information")
         var updateEmp = [
-    {type: "input",
-    message: "What is their first name?",
-    name: "first",
-    },
-    {type: "input",
-    message: "What is their last name?",
-    name: "last",
+    {type: "list",
+    message: "Which employee would you like to update?",
+    name: "name",
+    choices: employeeArray
     },
     {type: 'list',
-    message: "What is the employee's role?",
+    message: "What is their new job?",
     name: 'role',
-    choices: ["Junior Engineer", "Chief Engineer", "Junior Accountant", "Senior Accountant", "Sales Coordinator", "Sales Executive", "Front Desk", "Marketing"]
+    choices: roleArray
     },
-    {type: 'list',
-    message: `Who is the employee's manager?`,
-    name: 'manager',
-    choices: [ "list out all possible managers"]
-    }
     ]
     
     inquirer
-    .prompt(addEmp)
-        .then(function (res) {
+    .prompt(updateEmp)
+    .then(function (res) {
+
     
-    console.log(res)
+        connection.query(`UPDATE employee SET role_id = '${res.role}' WHERE id = ${res.name}`,function (err, res) {
+            if (err) console.log(err);
+            
+            init();
         })
+        
+            });
+    
+    })
+
+
 };
 
 
@@ -238,7 +235,6 @@ function removeEmp() {
             }) // [{}, {}, {}, {}]
     
 
-        console.log("Which employee would you like to delete?");
 
         inquirer
             .prompt([
@@ -247,10 +243,9 @@ function removeEmp() {
                     message: "What is the employee's name that you would like to remove?",
                     name: 'employeeId',
                     choices: employeeArray
-                },
-    
+                }
             ]).then(function (res) {
-                console.log(res.employeeId);
+                
                 var id = res.employeeId
                 // this is where i need the array of all employees so i can push it through inquirer
                 connection.query(`DELETE FROM employee WHERE id = ${id}`, function (err, result) {

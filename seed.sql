@@ -60,6 +60,8 @@ INSERT INTO department (name) VALUES ("Sales");
 INSERT INTO department (name) VALUES ("Accounting");
 INSERT INTO department (name) VALUES ("Engineering");
 
+SELECT role_id FROM employee INNER JOIN role ON employee.role_id = role.id;
+
 delete from employee;
 delete from role;
 delete from department;
